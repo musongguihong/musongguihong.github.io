@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GazeCloudAPI Example</title>
+  <script src="https://api.gazerecorder.com/GazeCloudAPI.js"></script>
+  <script>
+    let gazeDataArray = [];
+
+    window.onload = function() {
+      // 定义结果数据回调
+      GazeCloudAPI.OnResult = function (GazeData) {
+        if (GazeData.state === 0) {
+          // 有效注视数据
+          console.log('Gaze X: ' + GazeData.docX);
+          console.log('Gaze Y: ' + GazeData.docY);
+          console.log('Timestamp: ' + GazeData.time);
+          gazeDataArray.push(GazeData);
+        } else if (GazeData.state === -1) {
+          // 面部跟踪丢失
+          console.log('Face tracking lost');
+        } else if (GazeData.state === 1) {
+          // 注视数据未校准
+          console.log('Gaze data not calibrated');
+        }
+      };
+
+      // 校准完成回调
+      GazeCloudAPI.OnCalibrationComplete = function() {
+        console.log('Gaze calibration complete');
+      };
+
+      // 相机访问被拒绝回调
+      GazeCloudAPI.OnCamDenied = function() {
+        console.log('Camera access denied');
+      };
+
+      // 错误回调
+      GazeCloudAPI.OnError = function(msg) {
+        console.log('Error: ' + msg);
+      };
+
+      // 启用点击重新校准
+      GazeCloudAPI.UseClickRecalibration = true;
+
+      // 启动眼动追踪的按钮
+      document.getElementById('startButton').addEventListener('click', function() {
+        gazeDataArray = []; // 清空之前的数据
+        GazeCloudAPI.StartEyeTracking();
+      });
+
+      // 停止眼动追踪的按钮
+      document.getElementById('stopButton').addEventListener('click', function() {
+        GazeCloudAPI.StopEyeTracking();
+        downloadGazeData();
+      });
+    };
+
+    // 下载眼动数据
+    function downloadGazeData() {
+      const blob = new Blob([JSON.stringify(gazeDataArray, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'gaze_data.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</head>
+<body>
+  <h1>GazeCloudAPI Example</h1>
+  <button id="startButton">开始测试</button>
+  <button id="stopButton">停止测试</button>
+</body>
+</html>
